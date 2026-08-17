@@ -1,11 +1,13 @@
 <div align="center">
   <h1>Programación Reactiva con Project Reactor</h1>
-  <p><i>Documentación basada en ReactiveX y la especificación de Reactive Streams</i></p>
+  <p>Documentación basada en ReactiveX y la especificación de Reactive Streams</p>
 </div>
 
 ## Introducción
 La programación reactiva combina las mejores ideas del patrón **Observer**, el patrón **Iterator** y la **programación funcional**.
-<img width="1010" height="446" alt="image" src="https://github.com/user-attachments/assets/3ddcd4b8-d977-4872-9770-c152bb8da2bc" />
+
+<img width="505" height="223" alt="image" src="https://github.com/user-attachments/assets/3ddcd4b8-d977-4872-9770-c152bb8da2bc" />
+
 Project Reactor es una librería reactiva de cuarta generación diseñada para construir aplicaciones no bloqueantes (non-blocking) en la JVM, basada fuertemente en la especificación de *Reactive Streams*.
 
 ## Componentes de la API
