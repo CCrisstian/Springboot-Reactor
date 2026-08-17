@@ -1,1 +1,1 @@
-Tipo Reactivo - Tipo Imperativo
+<h1>Funciones Flux</h1>
