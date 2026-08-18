@@ -76,36 +76,155 @@ Combina múltiples flujos independientes (Publishers) en un solo flujo, intercal
 </div>
 
 *   *Comportamiento visual:* Si la Línea A emite `(20, 40, 60, 80, 100)` y la Línea B emite `(1, 1)` en diferentes momentos, el flujo combinado fusiona ambos entrelazando los eventos resultando en `(20, 40, 60, 1, 80, 100, 1)`.
-README.md
-Mostrando README.md.
 
-## ⚙️ Funciones Flux
+## Funciones Flux
 
 ### Métodos de Creación
 *   **`Flux.just(...)`**: Crea un flujo reactivo que emite los elementos proporcionados directamente en sus parámetros.
+
+    ```java
+    Flux<String> names = Flux.just("Andres", "Diego", "Maria", "Pedro", "Juan", "Bruce");
+    ```
+    
 *   **`Flux.range(...)`**: Crea un flujo que emite una secuencia incremental de números enteros dentro de un rango especificado.
+
+    ```java
+    Flux<Integer> range = Flux.range(1, 10);
+    ```
+    
 *   **`Flux.create(...)`**: Permite construir un flujo asíncrono desde cero mediante un emisor (`FluxSink`), muy útil para integrar lógica tradicional (como `Timer`) al mundo reactivo.
+
+    ```java
+    Flux.create(emmiter -> {
+        Timer timmer = new Timer();
+        timmer.schedule(new TimerTask() {
+            private Integer counter = 0;
+            @Override
+            public void run() {
+                emmiter.next(++counter);
+                if (counter == 5) {
+                    timmer.cancel();
+                    emmiter.error(new InterruptedException("Error, se ha detenido el flujo en 5"));
+                }
+            }
+        }, 1000, 1000);
+    });
+    ```
+    
 *   **`Flux.interval(...)`**: Genera un flujo que emite números secuenciales (de tipo `Long`) espaciados por una duración de tiempo específica.
+
+    ```java
+    Flux<Long> delay = Flux.interval(Duration.ofSeconds(1));
+    ```
+    
 *   **`Flux.fromIterable(...)`**: Convierte una estructura de datos tradicional e iterable (como una `List` de Java) en un flujo reactivo que emite cada elemento de la colección.
+
+    ```java
+    List<String> userList = Arrays.asList("Cristian Cristaldo", "Diego Fulano", "Maria Fulana");
+    Flux<String> names = Flux.fromIterable(userList);
+    ```
+    
 *   **`Flux.error(...)`**: Crea un flujo que termina inmediatamente emitiendo un error (una excepción) hacia el suscriptor.
+    ```java
+    Flux.error(new InterruptedException("Solo hasta 5"));
+    ```
 
 ### Operadores de Transformación y Filtrado
 *   **`.map(...)`**: Transforma los elementos del flujo aplicando una operación de forma síncrona, modificando el valor o el tipo del elemento emitido.
+
+    ```java
+    Flux.just("Andres", "Diego", "Maria")
+        .map(name -> name.toUpperCase());
+    ```
+    
 *   **`.flatMap(...)`**: Transforma los elementos de manera asíncrona devolviendo un nuevo `Mono` o `Flux` por cada elemento, y luego "aplana" todos esos resultados en un solo flujo continuo.
+
+    ```java
+    Flux.fromIterable(userList)
+        .flatMap(user -> Mono.just(user.getName().concat(" ").concat(user.getLastname())));
+    ```
+    
 *   **`.filter(...)`**: Evalúa cada elemento contra una condición lógica y solo deja continuar en el flujo a los elementos que la cumplen.
+
+    ```java
+    Flux.just("Cristian", "Diego", "Bruce")
+        .filter(name -> name.equalsIgnoreCase("bruce"));
+    ```
 
 ### Operadores de Utilidad y Efectos Secundarios
 *   **`.doOnNext(...)`**: Permite observar cada elemento que viaja por el flujo y ejecutar un bloque de código (como imprimir en consola o lanzar una validación) sin modificar el elemento original.
+
+    ```java
+    Flux.just("Andres", "Diego")
+        .doOnNext(System.out::println);
+    ```
+    
 *   **`.doOnTerminate(...)`**: Registra una acción o callback que se ejecutará justo antes de que el flujo termine, independientemente de si terminó con éxito o con un error.
+
+    ```java
+    Flux.range(1, 12)
+        .doOnTerminate(() -> log.info("Hemos terminado"));
+    ```
+    
 *   **`.delayElements(...)`**: Retrasa artificialmente la emisión de cada elemento en el flujo por un periodo de tiempo determinado.
+
+    ```java
+    Flux.range(1, 12)
+        .delayElements(Duration.ofSeconds(2));
+    ```
+    
 *   **`.limitRate(...)`**: Herramienta clave para manejar la contrapresión (backpressure), limitando la cantidad de elementos que se solicitan y procesan en "lotes".
+
+    ```java
+    Flux.range(1, 10)
+        .limitRate(5);
+    ```
+    
 *   **`.log()`**: Imprime automáticamente en la consola las señales reactivas del flujo (`onSubscribe`, `request`, `onNext`, `onComplete`) para facilitar la depuración.
+
+     ```java
+    Flux.range(1, 10).log();
+    ```
+     
 *   **`.retry(...)`**: Permite volver a intentar la ejecución del flujo un número determinado de veces en caso de que ocurra un error.
+
+    ```java
+    Flux.interval(Duration.ofSeconds(1))
+        .retry(2);
+    ```
 
 ### Operadores de Combinación
 *   **`.zipWith(...)`**: Toma el flujo actual y lo combina con otro, sincronizando las emisiones y uniendo los elementos de ambos flujos en un solo resultado (por defecto una Tupla).
 
+    ```java
+    Flux<Integer> range = Flux.range(0, 5);
+    Flux<Integer> numbers = Flux.just(1, 2, 3, 4, 5);
+    
+    numbers.zipWith(range, (first, second) -> String.format("Primer Flux: %d, Segundo Flux %d", first, second));
+    ```
+
 ### Operadores Finales (Terminales)
 *   **`.collectList()`**: Recopila todos los elementos emitidos por el `Flux` y los agrupa en una única lista de Java contenida dentro de un `Mono`.
+
+    ```java
+    Mono<List<String>> namesList = Flux.fromIterable(userList)
+        .flatMap(user -> Mono.just(user.getName()))
+        .collectList();
+    ```
+
 *   **`.subscribe(...)`**: Es el gatillo que inicia la ejecución real de todo el flujo reactivo y define qué hacer cuando llegan los datos, los errores o cuando se completa el proceso.
+
+    ```java
+    names.subscribe(
+        user -> log.info(user.toString()),
+        error -> log.error(error.getMessage()),
+        () -> log.info("El flujo ha finalizado correctamente")
+    );
+    ```
+
 *   **`.blockLast()`**: Bloquea el hilo de ejecución actual esperando activamente a que el flujo reactivo termine y retorne el último valor emitido.
+
+    ```java
+    range.zipWith(delay, (first, second) -> first)
+        .blockLast();
+    ```
